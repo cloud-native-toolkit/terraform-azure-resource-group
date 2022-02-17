@@ -5,3 +5,9 @@ module "resource_group" {
   region              = var.region
   enabled             = var.enabled
 }
+
+resource null_resource print_enabled {
+  provisioner "local-exec" {
+    command = "echo -n '${module.resource_group.enabled}' > .enabled"
+  }
+}
