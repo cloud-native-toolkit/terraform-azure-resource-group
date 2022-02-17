@@ -18,3 +18,10 @@ versions:
   variables:
     - name: region
       scope: global
+    - name: resource_group_name
+      alias: name
+      scope: module
+    - name: sync
+      moduleRef:
+        id: sync
+        output: sync
