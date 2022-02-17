@@ -1,3 +1,10 @@
+
+resource null_resource wait_for_sync {
+  provisioner "local-exec" {
+    command = "echo 'Sync: ${var.sync != null ? var.sync : ""}'"
+  }
+}
+
 resource azurerm_resource_group resource_group {
   count = var.provision && var.enabled ? 1 : 0
 
