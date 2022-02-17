@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
 
-echo "Implement validation logic"
-exit 1
+# verify resource group created?
+
+
+ENABLED=$(cat .enabled)
+
+if [[ "${ENABLED}" == "false" ]]; then
+  echo "The resource group is not enabled."
+fi
+
+echo "Terraform state:"
+terraform state list
