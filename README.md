@@ -73,7 +73,18 @@ The module follows the naming convention of terraform modules:
 
 The automation modules rely heavily on [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) automatically validate changes to the module and release new versions. The GitHub Action workflows are found in **.github/workflows**. There are three workflows provided by default:
 
-#### Verify and release module (verify.yaml)
+#### Verify workflow (verify-workflow.yaml)
+
+This workflow runs when called from other workflows, such as pull requests or merge to main.
+
+```yaml
+on:
+  workflow_call:
+```
+
+The `verify-workflow` job checks out the module and deploys the terraform template in the `test/stages` folder. (More on the details of this folder in a later section.) It applies the testcase(s) listed in the `strategy.matrix.testcase` variable against the terraform template to validate the module logic. It then runs the `.github/scripts/validate-deploy.sh` to verify that everything was deployed successfully. **Note:** This script should be customized to validate the resources provisioned by the module. After the deploy is completed, the destroy logic is also applied to validate the destroy logic and to clean up after the test. The parameters for the test case are defined in https://github.com/cloud-native-toolkit/action-module-verify/tree/main/env. New test cases can be added via pull request. 
+
+#### Verify (verify.yaml)
 
 This workflow runs for pull requests against the `main` branch and when changes are pushed to the `main` branch.
 
@@ -81,15 +92,27 @@ This workflow runs for pull requests against the `main` branch and when changes 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 ```
 
-The `verify` job checks out the module and deploys the terraform template in the `test/stages` folder. (More on the details of this folder in a later section.) It applies the testcase(s) listed in the `strategy.matrix.testcase` variable against the terraform template to validate the module logic. It then runs the `.github/scripts/validate-deploy.sh` to verify that everything was deployed successfully. **Note:** This script should be customized to validate the resources provisioned by the module. After the deploy is completed, the destroy logic is also applied to validate the destroy logic and to clean up after the test. The parameters for the test case are defined in https://github.com/cloud-native-toolkit/action-module-verify/tree/main/env. New test cases can be added via pull request.
+The `verify` job calls the verify-workflow workflow as described above.
 
 The `verifyMetadata` job checks out the module and validates the module metadata against the module metadata schema to ensure the structure is valid.
 
 The `release` job creates a new release of the module. The job only runs if the `verify` and `verifyMetadata` jobs completed successfully AND if the workflow was started from a push to the `main` branch (i.e. not a change to a pull request). The job uses the **release-drafter/release-drafter** GitHub Action to create the release based on the configuration in `.github/release-drafter.yaml`. The configuration looks for labels on the pull request to determine the type of change for the release changelog (`enhancement`, `bug`, `chore`) and which portion of the version number to increment (`major`, `minor`, `patch`).
+
+#### Verify pull request (verify-pr.yaml)
+
+This workflow runs for pull requests against the `main` branch and when changes are pushed to the `main` branch.
+
+```yaml
+on:
+  pull_request:
+    branches: [ main ]
+```
+
+The `verify` job calls the verify-workflow workflow as described above.
+
+The `verifyMetadata` job checks out the module and validates the module metadata against the module metadata schema to ensure the structure is valid.
 
 #### Publish assets (publish-assets.yaml)
 
@@ -184,7 +207,10 @@ The `test/stages` folder contains the terraform template needed to execute the m
 
 1. Fork the module git repository into your personal org
 2. In your forked repository, add the following secrets (note: if you are working in the repo in the Cloud Native Toolkit, these secrets are already available):
-  - __IBMCLOUD_API_KEY__ - an API Key to an IBM Cloud account where you can provision the test instances of any resources you need
+  - __AZURE_SUBSCRIPTION_ID__ - the Azure subscription where you can provision the test instances of any resources you need
+  - __AZURE_CLIENT_ID__ - the Azure Service Principal id to be used for testing
+  - __AZURE_CLIENT_SECRET__ - the secret (like password) of the Azure Service Principal id to be used for testing
+  - __AZURE_TENANT_ID__ - the Azure tenant 
 3. Create a branch in the forked repository where you will do your work
 4. Create a [draft pull request](https://github.blog/2019-02-14-introducing-draft-pull-requests/) in the Cloud Native Toolkit repository for your branch as soon as you push your first change. Add labels to the pull request for the type of change (`enhancement`, `bug`, `chore`) and the type of release (`major`, `minor`, `patch`) to impact the generated release documentation.
 5. When the changes are completed and the automated checks are running successfully, mark the pull request as "Ready to review".
