@@ -6,12 +6,12 @@ output "name" {
 
 output "id" {
   description = "The id of the resource group"
-  value       = length(data.azurerm_resource_group.resource_group) > 0 ? data.azurerm_resource_group.resource_group[0].id : ""
+  value       = data.azurerm_resource_group.resource_group.id
 }
 
 output "group" {
   description = "The resource group object"
-  value       = try(length(data.azurerm_resource_group.resource_group) > 0 ? data.azurerm_resource_group.resource_group[0] : tomap(false), {})
+  value       = data.azurerm_resource_group.resource_group
 }
 
 output "provision" {
@@ -23,10 +23,6 @@ output "sync" {
   description = "Value used to order the provisioning of the resource group"
   value       = var.resource_group_name
   depends_on  = [data.azurerm_resource_group.resource_group]
-}
-
-output "enabled" {
-  value = var.enabled
 }
 
 output "region" {

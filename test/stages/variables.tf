@@ -10,9 +10,6 @@ variable "region" {
   description = "Region for VLANs defined in private_vlan_number and public_vlan_number."
 }
 
-variable "enabled" {
-}
-
 variable "subscription_id" {}
 
 variable "client_id" {}
